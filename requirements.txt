@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic_settings
+python_dotenv
+google_generativeai
+pinecone
+pinecone_client
+langchain_google_genai
+langchain
+pypdf
+python_docx
+requests
+httpx 
