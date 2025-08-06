@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # Model Configuration
     EMBEDDING_MODEL_NAME: str = "models/text-embedding-004"
-    GENERATIVE_MODEL_NAME: str = "gemini-1.5-flash" # Optimized for speed and cost
+    GENERATIVE_MODEL_NAME: str = "gemini-2.5-flash" # Optimized for speed and cost
     EMBEDDING_DIMENSION: int = 768 # Dimension for text-embedding-004
 
     # The change is here:
