@@ -80,6 +80,45 @@ class LLMService:
         response = await chain.ainvoke({"context": context, "question": question})
         
         return response.strip()
+    
+    # In app/services/llm_service.py
+
+# ... (rest of the file is the same)
+
+    async def get_answer_from_context(self, question: str, context: str) -> str:
+        """
+        Generates a concise and analytical answer to a question based on the provided context.
+        This advanced prompt encourages citation and admitting when the answer is not present.
+        """
+        prompt_template = """
+        You are a highly intelligent and meticulous Q&A system for legal and insurance documents.
+        Your task is to provide a clear, accurate, and well-supported answer based *only* on the provided context from various sources.
+
+        Follow these rules strictly:
+        1.  **Synthesize Information:** Do not just copy-paste chunks. Synthesize the information from the context to form a coherent answer.
+        2.  **Cite Your Sources:** For every piece of information you use, you MUST cite the source document it came from. For example: "The grace period is 30 days (Source: policy_document_1.pdf)."
+        3.  **Handle Contradictions:** If you find conflicting information across different sources, point out the contradiction.
+        4.  **Admit Ignorance:** If the answer is not found in the provided context, you MUST state: "Based on the provided documents, there is no information available to answer this question." Do not make any assumptions or use outside knowledge.
+
+        CONTEXT:
+        {context}
+        
+        QUESTION:
+        "{question}"
+        
+        Based on the rules above, provide your answer:
+        """
+        
+        prompt = ChatPromptTemplate.from_template(prompt_template)
+        
+        chain = prompt | self.generative_model | StrOutputParser()
+        
+        logger.info(f"Invoking LLM chain with advanced prompt for question: '{question[:50]}...'")
+        
+        response = await chain.ainvoke({"context": context, "question": question})
+        
+        return response.strip()
 
 # Singleton instance
 llm_service = LLMService()
+

@@ -12,3 +12,4 @@ pypdf
 python_docx
 requests
 httpx 
+rank-bm25
