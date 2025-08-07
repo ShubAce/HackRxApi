@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status # 'status' is already imported
 from .models import QueryRequest, QueryResponse
 from app.api.deps import verify_token
 from app.services.document_service import document_service
@@ -32,7 +32,9 @@ async def run_submission(request: QueryRequest):
         chunks = document_service.chunk_text(full_text)
         chunk_texts = [chunk['text'] for chunk in chunks]
 
+        # This call will now work correctly
         embeddings = llm_service.get_embeddings(chunk_texts)
+        
         vectors_to_upsert = [{'id': f'chunk_{i}', 'values': embeddings[i], 'metadata': {'text': chunk_texts[i]}} for i in range(len(chunk_texts))]
         vector_db_service.upsert(vectors=vectors_to_upsert, namespace=namespace)
         logger.info(f"Document upserted into temporary namespace: {namespace}")
@@ -42,18 +44,14 @@ async def run_submission(request: QueryRequest):
             logger.info(f"Processing question: '{question}'")
             query_embedding = llm_service.get_query_embedding(question)
 
-            # 1. Wider Net Retrieval: Get more potential contexts in one shot.
-            # We fetch 7 chunks to maximize our chances of finding the right answer.
             retrieved_matches = vector_db_service.query(
                 query_embedding=query_embedding,
                 top_k=7,
                 namespace=namespace
             )
 
-            # 2. No-Delay Context Stuffing: Immediately build the context.
             context = "\n---\n".join([match['metadata']['text'] for match in retrieved_matches])
             
-            # 3. Fast Generation: Pass to the competition-tuned LLM service.
             return await llm_service.get_answer_from_context(question, context)
 
         tasks = [process_question(q) for q in request.questions]
@@ -63,4 +61,5 @@ async def run_submission(request: QueryRequest):
 
     except Exception as e:
         logger.error(f"An unexpected error occurred in the RAG pipeline: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERRO, detail="An internal server error occurred.")
+        # --- TYPO FIXED HERE ---
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred.")

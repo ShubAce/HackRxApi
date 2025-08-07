@@ -1,15 +1,41 @@
-# In app/services/llm_service.py
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from app.utils.logger import get_logger
 from app.core.config import get_settings
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
+from typing import List
 
-# ... (the top part of your file remains the same) ...
+logger = get_logger(__name__)
+settings = get_settings()
 
 class LLMService:
-    # ... (your __init__ and get_embeddings methods remain the same) ...
+    def __init__(self):
+        try:
+            genai.configure(api_key=settings.GOOGLE_API_KEY)
+            self.embedding_model = GoogleGenerativeAIEmbeddings(
+                model=settings.EMBEDDING_MODEL_NAME,
+                task_type="retrieval_document"
+            )
+            self.generative_model = ChatGoogleGenerativeAI(
+                model=settings.GENERATIVE_MODEL_NAME,
+                temperature=0.1,
+                convert_system_message_to_human=True
+            )
+            logger.info("Google AI Services configured successfully.")
+        except Exception as e:
+            logger.error(f"Failed to configure Google AI Services: {e}")
+            raise
+
+    # --- THIS METHOD WAS MISSING ---
+    def get_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """A wrapper to generate embeddings for a list of document chunks."""
+        return self.embedding_model.embed_documents(texts)
+
+    # --- THIS METHOD WAS ALSO MISSING ---
+    def get_query_embedding(self, text: str) -> List[float]:
+        """A wrapper to generate an embedding for a single query."""
+        return self.embedding_model.embed_query(text)
 
     async def get_answer_from_context(self, question: str, context: str) -> str:
         """
@@ -38,10 +64,9 @@ class LLMService:
         
         prompt = ChatPromptTemplate.from_template(prompt_template)
         
-        # This chain is optimized for speed
         chain = prompt | self.generative_model | StrOutputParser()
         
-        get_logger.info(f"Invoking competition-optimized LLM chain for question: '{question[:50]}...'")
+        logger.info(f"Invoking competition-optimized LLM chain for question: '{question[:50]}...'")
         
         response = await chain.ainvoke({"context": context, "question": question})
         
