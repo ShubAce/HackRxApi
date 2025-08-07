@@ -75,7 +75,7 @@ class AdvancedRetriever:
         
         # Semantic search
         query_embedding = llm_service.get_query_embedding(question)
-        semantic_results = vector_db_service.query(query_embedding, top_k=10, namespace=namespace)
+        semantic_results = vector_db_service.query(query_embedding, top_k=5, namespace=namespace)
         
         # Combine results (a simple weighted approach)
         # Create a map of chunk ID to its original data and semantic score
