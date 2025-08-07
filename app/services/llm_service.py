@@ -41,7 +41,7 @@ class LLMService:
         # This chain is optimized for speed
         chain = prompt | self.generative_model | StrOutputParser()
         
-        logger.info(f"Invoking competition-optimized LLM chain for question: '{question[:50]}...'")
+        get_logger.info(f"Invoking competition-optimized LLM chain for question: '{question[:50]}...'")
         
         response = await chain.ainvoke({"context": context, "question": question})
         
