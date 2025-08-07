@@ -27,4 +27,4 @@ async def root():
     """
     A simple health check endpoint.
     """
-    return {"status": "ok", "message": "Welcome to the Intelligent Query-Retrieval System API!"}
+    return {"status": "ok", "message": "Welcome to the Intelligent Query-Retrieval System API!"} 
