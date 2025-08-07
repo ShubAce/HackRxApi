@@ -26,7 +26,7 @@ class LLMService:
         except Exception as e:
             logger.error(f"Failed to configure Google AI Services: {e}")
             raise
-
+ 
     # --- THIS METHOD WAS MISSING ---
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """A wrapper to generate embeddings for a list of document chunks."""

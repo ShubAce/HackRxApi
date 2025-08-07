@@ -33,4 +33,4 @@ def get_settings() -> Settings:
     """
     Returns the settings instance, cached for performance.
     """
-    return Settings()
+    return Settings() 

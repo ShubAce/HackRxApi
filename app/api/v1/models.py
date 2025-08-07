@@ -8,4 +8,4 @@ class QueryRequest(BaseModel):
     questions: List[str]
 
 class QueryResponse(BaseModel):
-    answers: List[str]
+    answers: List[str] 

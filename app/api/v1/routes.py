@@ -62,4 +62,4 @@ async def run_submission(request: QueryRequest):
     except Exception as e:
         logger.error(f"An unexpected error occurred in the RAG pipeline: {e}", exc_info=True)
         # --- TYPO FIXED HERE ---
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred.") 

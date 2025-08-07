@@ -13,4 +13,4 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(beare
             detail="Invalid or missing authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return True
+    return True 

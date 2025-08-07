@@ -16,7 +16,7 @@ class AdvancedRetriever:
         """Creates a BM25 keyword search index."""
         tokenized_corpus = [doc.split(" ") for doc in corpus]
         return BM25Okapi(tokenized_corpus)
-
+ 
     def _rerank_with_llm(self, question: str, chunks: List[Dict]) -> List[Dict]:
         """
         Uses the generative LLM to re-rank the retrieved chunks for relevance.
