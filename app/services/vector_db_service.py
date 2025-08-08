@@ -2,7 +2,7 @@ import pinecone
 from app.core.config import get_settings
 from app.utils.logger import get_logger
 from typing import List, Dict, Any
-from app.core.config import get_settings
+
 logger = get_logger(__name__)
 settings = get_settings()
 
@@ -25,7 +25,7 @@ class VectorDBService:
             self.pc.create_index(
                 name=self.index_name,
                 dimension=self.dimension,
-                metric='cosine', # Cosine similarity is great for semantic search
+                metric='cosine',
                 spec=pinecone.ServerlessSpec(
                     cloud='aws',
                     region='us-east-1'
@@ -38,16 +38,12 @@ class VectorDBService:
         self.index = self.pc.Index(self.index_name)
 
     def upsert(self, vectors: List[Dict[str, Any]], namespace: str):
-        """
-        Upserts vectors into the Pinecone index within a specific namespace.
-        A namespace is used to isolate documents.
-        """
+        """Upserts vectors into the Pinecone index within a specific namespace."""
         if not vectors:
             logger.warning("Upsert called with no vectors.")
             return
         
         logger.info(f"Upserting {len(vectors)} vectors to namespace '{namespace}'...")
-        # Upsert in batches for efficiency
         batch_size = 100
         for i in range(0, len(vectors), batch_size):
             batch = vectors[i:i+batch_size]
@@ -55,9 +51,7 @@ class VectorDBService:
         logger.info("Upsert completed.")
 
     def query(self, query_embedding: List[float], top_k: int, namespace: str) -> List[Dict[str, Any]]:
-        """
-        Queries the Pinecone index for the most similar vectors.
-        """
+        """Queries the Pinecone index for the most similar vectors."""
         logger.info(f"Querying index in namespace '{namespace}' with top_k={top_k}.")
         results = self.index.query(
             namespace=namespace,
@@ -67,5 +61,4 @@ class VectorDBService:
         )
         return results.get('matches', [])
 
-# Singleton instance
 vector_db_service = VectorDBService()

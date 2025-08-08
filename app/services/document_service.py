@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class DocumentService:
     def __init__(self):
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1500, # Optimized for context length and embedding model
+            chunk_size=1500,
             chunk_overlap=200,
             length_function=len,
             add_start_index=True,
@@ -39,43 +39,22 @@ class DocumentService:
         """Extracts text from PDF content."""
         logger.info("Parsing PDF document.")
         text = ""
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as tmp:
             tmp.write(content)
             tmp_path = tmp.name
-        
-        try:
-            reader = PdfReader(tmp_path)
-            for page in reader.pages:
-                text += page.extract_text() or ""
-        finally:
-            import os
-            os.remove(tmp_path)
-        return text
-
-    def _parse_docx(self, content: bytes) -> str:
-        """Extracts text from DOCX content."""
-        logger.info("Parsing DOCX document.")
-        text = ""
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
-            tmp.write(content)
-            tmp_path = tmp.name
-
-        try:
-            doc = Document(tmp_path)
-            for para in doc.paragraphs:
-                text += para.text + "\n"
-        finally:
-            import os
-            os.remove(tmp_path)
+            try:
+                reader = PdfReader(tmp_path)
+                for page in reader.pages:
+                    text += page.extract_text() or ""
+            except Exception as e:
+                logger.error(f"Error reading PDF file: {e}")
+                raise
         return text
 
     def parse_document(self, content: bytes, file_type: str) -> str:
         """Parses document based on file type."""
         if file_type == 'pdf':
             return self._parse_pdf(content)
-        elif file_type == 'docx':
-            return self._parse_docx(content)
-        # TODO: Add email (.eml) parsing if needed
         else:
             logger.warning(f"Unsupported file type: {file_type}. Skipping parsing.")
             raise ValueError(f"Unsupported file type: {file_type}")
@@ -90,9 +69,6 @@ class DocumentService:
 
     def generate_document_namespace(self, url: str) -> str:
         """Creates a unique and deterministic namespace from the document URL."""
-        # We hash the URL to create a stable ID for the document.
-        # This ensures we re-use the same namespace for the same document URL.
         return hashlib.sha256(url.encode()).hexdigest()
 
-# Singleton instance
 document_service = DocumentService()

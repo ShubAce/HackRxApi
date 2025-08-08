@@ -36,11 +36,7 @@ class LLMService:
         return self.embedding_model.embed_query(text)
 
     async def get_all_answers_in_one_shot(self, question_context_pairs: List[Dict]) -> List[str]:
-        """
-        Generates all answers in a single LLM call for maximum speed.
-        This method is designed to be fast and reduce network latency.
-        """
-        # Build a single massive prompt with all questions and their retrieved contexts
+        """Generates all answers in a single LLM call for maximum speed."""
         prompt_context = ""
         for i, pair in enumerate(question_context_pairs):
             prompt_context += f"--- CONTEXT FOR QUESTION {i+1} ---\n{pair['context']}\n\n"
@@ -68,26 +64,20 @@ class LLMService:
         JSON OUTPUT:
         """
         
-        # Use LangChain's structured output feature to reliably get a JSON list
         model_with_json = self.generative_model.with_structured_output(List[str])
-        
         chain = ChatPromptTemplate.from_template(one_shot_prompt) | model_with_json
         
         logger.info(f"Invoking ONE-SHOT LLM chain for {len(question_context_pairs)} questions.")
         
         try:
             response_list = await chain.ainvoke({})
-            # Ensure the list has the correct number of items, pad if necessary
             if len(response_list) != len(question_context_pairs):
                 logger.warning(f"LLM returned {len(response_list)} answers, expected {len(question_context_pairs)}. Padding with default.")
-                # Pad with default message to prevent errors
                 while len(response_list) < len(question_context_pairs):
                     response_list.append("Error processing this question.")
             return response_list
         except Exception as e:
             logger.error(f"One-shot LLM call failed: {e}")
-            # Return a list of errors if the entire call fails
             return ["Error processing this question." for _ in question_context_pairs]
-
 
 llm_service = LLMService()

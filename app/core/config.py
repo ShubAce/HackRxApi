@@ -5,6 +5,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
+    pydantic-settings automatically finds and loads the .env file.
     """
     # Security
     API_BEARER_TOKEN: str
@@ -14,18 +15,17 @@ class Settings(BaseSettings):
 
     # Pinecone
     PINECONE_API_KEY: str
-    PINECONE_INDEX_NAME: str = "hackrx"
+    PINECONE_INDEX_NAME: str = "hackrx-rag-index"
     
     # Model Configuration
     EMBEDDING_MODEL_NAME: str = "models/text-embedding-004"
-    GENERATIVE_MODEL_NAME: str = "gemini-2.5-flash" # Optimized for speed and cost
-    EMBEDDING_DIMENSION: int = 768 # Dimension for text-embedding-004
+    GENERATIVE_MODEL_NAME: str = "gemini-1.5-flash-latest"
+    EMBEDDING_DIMENSION: int = 768
 
-    # The change is here:
     model_config = SettingsConfigDict(
         env_file=".env", 
         env_file_encoding='utf-8',
-        extra='ignore'  # This tells Pydantic to ignore extra fields
+        extra='ignore'
     )
 
 @lru_cache()
@@ -33,4 +33,4 @@ def get_settings() -> Settings:
     """
     Returns the settings instance, cached for performance.
     """
-    return Settings() 
+    return Settings()
