@@ -1,13 +1,20 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 from app.utils.logger import get_logger
 from app.core.config import get_settings
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
 from typing import List, Dict
+from pydantic import BaseModel, Field # <-- Import BaseModel and Field
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+# --- DEFINE THE OUTPUT SCHEMA ---
+# This class tells the LLM the exact JSON structure we want back.
+class AnswerList(BaseModel):
+    """A list of answers to the user's questions."""
+    answers: List[str] = Field(description="A list of string answers, one for each question asked.")
+
 
 class LLMService:
     def __init__(self):
@@ -43,34 +50,33 @@ class LLMService:
 
         questions_list = "\n".join([f"{i+1}. {pair['question']}" for i, pair in enumerate(question_context_pairs)])
 
+        # The prompt is simplified as the model now knows the exact output format.
         one_shot_prompt = f"""
-        You are a high-speed Q&A machine. You will be given a list of questions and a block of context corresponding to each question.
-        Your task is to answer all questions in order.
-
-        RULES:
-        1. For each question, use ONLY its corresponding context block to formulate the answer.
-        2. If the answer for a question is not in its context, you MUST use the exact phrase: `Information not available in the provided document.`
-        3. Your final output MUST be a single, valid JSON list of strings, where each string is the answer to the corresponding question. The list must have exactly {len(question_context_pairs)} items.
+        You are a high-speed Q&A machine. Answer all questions based ONLY on the provided context for each question.
+        If the answer is not in a question's context, respond for that question with the exact phrase: `Information not available in the provided document.`
         
-        EXAMPLE OUTPUT FORMAT:
-        ["Answer for question 1", "Answer for question 2", "Information not available in the provided document."]
-
         CONTEXTS:
         {prompt_context}
 
         QUESTIONS:
         {questions_list}
-
-        JSON OUTPUT:
         """
         
-        model_with_json = self.generative_model.with_structured_output(List[str])
+        # --- APPLY THE FIX HERE ---
+        # We pass our Pydantic class, not the type hint.
+        model_with_json = self.generative_model.with_structured_output(AnswerList)
+        
         chain = ChatPromptTemplate.from_template(one_shot_prompt) | model_with_json
         
         logger.info(f"Invoking ONE-SHOT LLM chain for {len(question_context_pairs)} questions.")
         
         try:
-            response_list = await chain.ainvoke({})
+            # The chain will now return an instance of our AnswerList class
+            response_object = await chain.ainvoke({})
+            
+            # We extract the list of answers from the object
+            response_list = response_object.answers
+
             if len(response_list) != len(question_context_pairs):
                 logger.warning(f"LLM returned {len(response_list)} answers, expected {len(question_context_pairs)}. Padding with default.")
                 while len(response_list) < len(question_context_pairs):
